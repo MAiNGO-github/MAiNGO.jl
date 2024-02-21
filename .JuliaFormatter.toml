@@ -1,0 +1,4 @@
+style = "yas"
+always_for_in = false
+whitespace_in_kwargs = true
+separate_kwargs_with_semicolon = false
