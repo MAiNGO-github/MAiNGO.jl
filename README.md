@@ -13,10 +13,10 @@ A Julia package containing a precompiled version of MAiNGO is available (MAiNGO_
 
 ```julia
 using MAiNGO # if this fails, you need to add the package first manually
-
+using JuMP
 #Set options in constructor
-model=Model(optimizer_with_attributes(MAINGO.Optimizer, "epsilonA"=> 1e-8))
-
+model=Model(optimizer_with_attributes(MAiNGO.Optimizer, "epsilonA"=> 1e-8))
+set_silent(model)
 
 @variable(model, x, lower_bound=-20, upper_bound=20)
 @variable(model, 0<=y<=2)
@@ -55,7 +55,7 @@ ENV["MAINGO_EXEC"] = "W:\\maingo_build\\Debug\\MAiNGO.exe"  #replace "W:\\maingo
 using MAiNGO # if this fails, you need to add the package first manually
 #create model
 using JuMP
-model=Model(MAINGO.Optimizer)
+model=Model(MAiNGO.Optimizer)
 @variable(model, x, lower_bound=0, upper_bound=5)
 @variable(model, y, lower_bound=0, upper_bound=2, start=0.5)
 
@@ -87,9 +87,9 @@ ENV["MAINGO_LIB"]="W:\\maingo_build\\Debug\\shared_parser.dll"  #replace "W:\\ma
 using MAiNGO # if this fails, you need to add the package first manually
 
 #Set options in constructor
-model=Model(optimizer_with_attributes(MAINGO.Optimizer, "epsilonA"=> 1e-8,"res_name"=>"res_new.txt","prob_name"=>"problem.txt"))
+model=Model(optimizer_with_attributes(MAiNGO.Optimizer, "epsilonA"=> 1e-8,"res_name"=>"res_new.txt","prob_name"=>"problem.txt"))
 #Alternate syntax
-#model=Model(() -> MAINGO.Optimizer(epsilonA=1e-8))#, "options" => options))
+#model=Model(() -> MAiNGO.Optimizer(epsilonA=1e-8))#, "options" => options))
 
 @variable(model, x, lower_bound=-20, upper_bound=20)
 #@variable(model, y in MOI.Integer(),lower_bound=-10,upper_bound=10, start=0.5)
@@ -123,7 +123,7 @@ Both modes of operation allow setting MAiNGO options through the MatOptInterface
 
 ```julia
 # assuming necessary paths and using-statements have already been set
-model = Model(MAINGO.Optimizer)
+model = Model(MAiNGO.Optimizer)
 MOI.set(model, MOI.Silent(), true) # silence all MAiNGO output
 MOI.set(model, MOI.AbsoluteGapTolerance(), 1e-8) # set the absolute gap tolerance
 MOI.set(model, MOI.RawOptimizerAttribute("PRE_pureMultistart"), 1) # example of setting an option via the MOI.RawOptimizerAttribute() function
