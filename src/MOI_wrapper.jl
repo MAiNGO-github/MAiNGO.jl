@@ -14,6 +14,7 @@ const CI = MOI.ConstraintIndex
 
 const SAF = MOI.ScalarAffineFunction{Float64}
 const SQF = MOI.ScalarQuadraticFunction{Float64}
+const SNF = MOI.ScalarNonlinearFunction
 
 # set aliases
 const Bounds = Union{MOI.EqualTo{Float64},

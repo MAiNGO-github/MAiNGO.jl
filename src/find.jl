@@ -21,7 +21,7 @@ function findMAiNGO_capi(io, path)
     MAiNGO.maingo_lib[] = path
     env_status = MAINGO_NOT_FOUND
     try
-        lib = Libdl.dlopen(maingo_lib) # Open the library explicitly.
+        lib = Libdl.dlopen(MAiNGO.maingo_lib[]) # Open the library explicitly.
         sym = Libdl.dlsym(lib, :solve_problem_from_ale_string_with_maingo)   # Get a symbol for the function to call.
         Libdl.dlclose(lib)
         env_status = C_API

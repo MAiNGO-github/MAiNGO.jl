@@ -3,7 +3,7 @@
 ENV["MAINGO_LIB"] = "XYZ/maingo/build/libmaingo-c-api.so"
 include("../src/MAiNGO.jl")
 using Test
-
+include("function_tracing.jl")
 include("gear.jl")
 include("minlp.jl")
 include("nlp1.jl")

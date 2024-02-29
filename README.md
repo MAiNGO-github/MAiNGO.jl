@@ -132,15 +132,21 @@ MOI.set(model, MOI.RawOptimizerAttribute("PRE_pureMultistart"), 1) # example of 
 ## Switching between modes, finding the MAiNGO executable
 If you need to update the path to the MAiNGO executable during a session, this can be done as follows:
 ```julia
-ENV["MAINGO_EXEC"] = "W:\\maingo_build\\Debug\\MAiNGO.exe" # using standalone version (mode A)
+
 using MAiNGO
+# by default, MAiNGO_jll will be used
+# explicitly force use of standalone version (mode A)
+ENV["MAINGO_EXEC"] = "W:\\maingo_build\\Debug\\MAiNGO.exe"
+findMAiNGO(preferred=MAiNGO.C_API) # see note on "preferred"-argument below
 # ...
 # e.g. switch to release version of MAiNGO
 ENV["MAINGO_EXEC"] = "W:\\maingo_build\\Release\\MAiNGO.exe"
-findMAiNGO()
+findMAiNGO(preferred=MAiNGO.C_API)
 # now switch to C-API (mode B)
 ENV["MAINGO_LIB"]="W:\\maingo_build\\Debug\\shared_parser.dll"  #replace "W:\\maingo_build\\Debug\\" with path to shared_parser.dll
-findMAiNGO()
+findMAiNGO(preferred=MAiNGO.C_API)
+# switch back to MAiNGO_jll
+findMAiNGO(preferred=MAiNGO.MAINGO_JLL)
 ```
 
 The findMAiNGO() function takes several optional arguments, which can be passed as keyword-arguments:

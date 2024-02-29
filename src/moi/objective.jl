@@ -29,9 +29,10 @@ end
 #Declare support for linear and quadratic objective functions. Nonlinear objective function is enabled in constraints.jl
 MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{SAF}) = true
 MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{SQF}) = true
+MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{SNF}) = true
 
 function MOI.set(model::Optimizer, ::MOI.ObjectiveFunction{F},
-                 obj::F) where {F<:Union{SAF,SQF}}
+                 obj::F) where {F<:Union{SAF,SQF,SNF}}
     model.inner.objective_info.expression = to_expr(obj)
     return
 end

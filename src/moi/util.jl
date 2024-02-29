@@ -40,6 +40,18 @@ function to_expr(f::SQF)
     return expr
 end
 
+function to_expr(f::SNF)
+    expr = Expr(:call, f.head)
+    for arg in f.args
+        push!(expr.args, to_expr(arg))
+    end
+    return expr
+end
+
+to_expr(x::Real) = x
+
+to_expr(vi::MOI.VariableIndex) = :(x[$(vi.value)])
+
 # check_variable_indices
 function check_variable_indices(model::Optimizer, index::VI)
     @assert 1 <= index.value <= length(model.inner.variable_info)

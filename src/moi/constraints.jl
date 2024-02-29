@@ -1,7 +1,7 @@
 #This file handels support for constraints. Defines what type of constraints can be handeled.
 
 #Declare and implement support for scalar affine and quadratic constraints
-function MOI.supports_constraint(::Optimizer, ::Type{<:Union{SAF,SQF}},
+function MOI.supports_constraint(::Optimizer, ::Type{<:Union{SAF,SQF,SNF}},
                                  ::Type{<:Union{MOI.GreaterThan{Float64},
                                                 MOI.LessThan{Float64},MOI.EqualTo{Float64}}})
     return true
@@ -9,7 +9,7 @@ end
 
 #How a linear or quadratic constraint can be added.
 #Linear and quadratic constraints are converted into nonlinear constraints.
-function MOI.add_constraint(model::Optimizer, f::Union{SAF,SQF},
+function MOI.add_constraint(model::Optimizer, f::Union{SAF,SQF,SNF},
                             set::Union{MOI.GreaterThan{Float64},MOI.LessThan{Float64},
                                        MOI.EqualTo{Float64}})
     #check_variable_indices(model, f)
