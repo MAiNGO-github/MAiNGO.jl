@@ -1,7 +1,7 @@
 module Pool1
 
 using JuMP
-using ..MAiNGO
+using MAiNGO
 m = Model(MAiNGO.Optimizer)
 MOI.set(m, MOI.Silent(), true)
 lb = [0, 3, 1, 2, 0, 0, 0]

@@ -1,5 +1,5 @@
 module MINLP_traced
-using ..MAiNGO
+using MAiNGO
 using JuMP, Test
 
 m = Model(MAiNGO.Optimizer)
