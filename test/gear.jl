@@ -1,5 +1,5 @@
 module Gear
-using ..MAiNGO
+using MAiNGO
 using JuMP, Test
 
 m = Model(MAiNGO.Optimizer)

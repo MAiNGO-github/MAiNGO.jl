@@ -5,8 +5,6 @@
 
 # MIT License Copyright (c) 2015 Joey Huchette for Baron.jl
 
-__precompile__()
-
 module MAiNGO
 
 @enum EnvironmentStatus begin
@@ -147,4 +145,5 @@ end
 
 include("util.jl")
 include("MOI_wrapper.jl")
+
 end

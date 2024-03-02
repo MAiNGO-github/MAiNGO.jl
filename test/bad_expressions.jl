@@ -1,5 +1,5 @@
 module BadExpressions
-using ..MAiNGO
+using MAiNGO
 using JuMP, Test
 
 @testset "UnrecognizedExpressionException" begin

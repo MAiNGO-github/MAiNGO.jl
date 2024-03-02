@@ -5,7 +5,7 @@ module TestMAINGO
 #ENV["MAINGO_LIB"]="XXX/maingo/build/libmaingo-c-api.so"  #replace with path tho c-api lib file.
 #include the wrapper
 
-using ..MAiNGO
+using MAiNGO
 using MathOptInterface
 using Test
 
@@ -38,7 +38,7 @@ const CONFIG = MOI.Test.Config(
                                              MOI.ConstraintBasisStatus,
                                              MOI.DualObjectiveValue,
                                              #MOI.ObjectiveBound,
-                                             #MOI.VariableName, 
+                                             #MOI.VariableName,
                                              MOI.DualStatus,
                                              MOI.ConstraintDual])
 
