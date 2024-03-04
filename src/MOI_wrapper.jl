@@ -1,20 +1,6 @@
 #This file handels the main wrapping of the Optimizer and model to be used from the MathOptInterface.
 
-using MathOptInterface: MathOptInterface
-import MathOptInterface: Utilities
-
-const MOI = MathOptInterface
-const MOIU = MOI.Utilities
-
-# indices
-const VI = MOI.VariableIndex
-const CI = MOI.ConstraintIndex
-
-# function aliases
-
-const SAF = MOI.ScalarAffineFunction{Float64}
-const SQF = MOI.ScalarQuadraticFunction{Float64}
-const SNF = MOI.ScalarNonlinearFunction
+import MathOptInterface as MOI
 
 # set aliases
 const Bounds = Union{MOI.EqualTo{Float64},
@@ -26,7 +12,7 @@ const Bounds = Union{MOI.EqualTo{Float64},
 mutable struct Optimizer <: MOI.AbstractOptimizer
     inner::MAINGOModel #The model
     nlp_block_data::Union{Nothing,MOI.NLPBlockData} #Nonlinear equations are handled specially in current version of MathOptInterface
-    ##	function Optimizer(; kwargs...) 
+    ##	function Optimizer(; kwargs...)
     ##        options = Dict{String, Any}(String(key) => val for (key,val) in kwargs)
     ##        return new(MAINGOModel(options), nothing)
     ##	end
@@ -37,20 +23,20 @@ Optimizer(; options...) = Optimizer(MAINGOModel(; options...), nothing)
 #Define name
 MOI.get(::Optimizer, ::MOI.SolverName) = "MAiNGO"
 
-#Define functions and constraints usable in the model 
-MOIU.@model(Model, # modelname
-            (), # scalarsets
-            (MOI.Interval, MOI.LessThan, MOI.GreaterThan, MOI.EqualTo), # typedscalarsets 
-            (), # vectorsets
-            (), # typedvectorsets
-            (), # scalarfunctions
-            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction), # typedscalarfunctions (that we can handle nonlinear functions is specified later)
-            (), # vectorfunctions
-            ())
+#Define functions and constraints usable in the model
+MOI.Utilities.@model(Model, # modelname
+                     (), # scalarsets
+                     (MOI.Interval, MOI.LessThan, MOI.GreaterThan, MOI.EqualTo), # typedscalarsets
+                     (), # vectorsets
+                     (), # typedvectorsets
+                     (), # scalarfunctions
+                     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction), # typedscalarfunctions (that we can handle nonlinear functions is specified later)
+                     (), # vectorfunctions
+                     ())
 
 #We allow setting and receiving parameters by string
 #E.g. model=Model(optimizer_with_attributes(MAINGO.Optimizer, "epsilonA"=> 1e-8,"res_name"=>"res_new.txt","prob_name"=>"problem.txt"))
-# or  model=Model(() -> MAINGO.Optimizer(epsilonA=1e-8))#, "options" => options)) 
+# or  model=Model(() -> MAINGO.Optimizer(epsilonA=1e-8))#, "options" => options))
 # RawOptimizerAttribute
 MOI.supports(::Optimizer, ::MOI.RawOptimizerAttribute) = true
 
@@ -140,7 +126,7 @@ end
 
 MOI.supports_incremental_interface(::Optimizer) = true
 function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kws...)
-    return MOIU.default_copy_to(dest, src; kws...)
+    return MOI.Utilities.default_copy_to(dest, src; kws...)
 end
 
 # This function is taken and adapted from https://discourse.julialang.org/t/how-to-read-from-external-command-and-also-get-exit-status/99880
@@ -172,7 +158,7 @@ struct option_pair_c
     end
 end
 
-#Optimize the model with the given settings, if the C-API is found. 
+#Optimize the model with the given settings, if the C-API is found.
 #If it is not found, the fallback option described in optimizeWithFile! is used.
 function MOI.optimize!(model::Optimizer)
     if environment_status[] == C_API || environment_status[] == MAINGO_JLL

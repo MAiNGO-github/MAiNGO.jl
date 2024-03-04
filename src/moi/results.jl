@@ -73,7 +73,7 @@ end
 MOI.get(model::Optimizer, ::MOI.ObjectiveValue) = model.inner.solution_info.objective_value
 
 #Get variable values at solution
-function MOI.get(model::Optimizer, ::MOI.VariablePrimal, vi::VI)
+function MOI.get(model::Optimizer, ::MOI.VariablePrimal, vi::MOI.VariableIndex)
     solution_info = model.inner.solution_info
     if solution_info === nothing || solution_info.feasible_point === nothing
         error("VariablePrimal not available.")
@@ -102,7 +102,7 @@ function MOI.get(model::Optimizer, ::MOI.RawStatusString)
 end
 
 #function MOI.get(model::Optimizer, ::MOI.NodeCount)
-#	
+#
 #end
 
 #Get solution time

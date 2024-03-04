@@ -1,7 +1,10 @@
 #This file handels support for constraints. Defines what type of constraints can be handeled.
 
 #Declare and implement support for scalar affine and quadratic constraints
-function MOI.supports_constraint(::Optimizer, ::Type{<:Union{SAF,SQF,SNF}},
+function MOI.supports_constraint(::Optimizer,
+                                 ::Type{<:Union{MOI.ScalarAffineFunction{Float64},
+                                                MOI.ScalarQuadraticFunction{Float64},
+                                                MOI.ScalarNonlinearFunction}},
                                  ::Type{<:Union{MOI.GreaterThan{Float64},
                                                 MOI.LessThan{Float64},MOI.EqualTo{Float64}}})
     return true
@@ -9,7 +12,10 @@ end
 
 #How a linear or quadratic constraint can be added.
 #Linear and quadratic constraints are converted into nonlinear constraints.
-function MOI.add_constraint(model::Optimizer, f::Union{SAF,SQF,SNF},
+function MOI.add_constraint(model::Optimizer,
+                            f::Union{MOI.ScalarAffineFunction{Float64},
+                                     MOI.ScalarQuadraticFunction{Float64},
+                                     MOI.ScalarNonlinearFunction},
                             set::Union{MOI.GreaterThan{Float64},MOI.LessThan{Float64},
                                        MOI.EqualTo{Float64}})
     #check_variable_indices(model, f)
@@ -25,25 +31,26 @@ function MOI.add_constraint(model::Optimizer, f::Union{SAF,SQF,SNF},
         expr = :($(set.lower) <= $expr <= $(set.upper))
     end
     push!(model.inner.constraint_info, ConstraintInfo(expr, nothing))
-    return CI{typeof(f),typeof(set)}(length(model.inner.constraint_info))
+    return MOI.ConstraintIndex{typeof(f),typeof(set)}(length(model.inner.constraint_info))
 end
 
 ##Declare and implement support for setting and getting constraint names
-MOI.supports(model::Optimizer, ::MOI.ConstraintName, ::Type{CI}) = true
-function MOI.get(model::Optimizer, ::MOI.ConstraintName, ci::CI)::String
+MOI.supports(model::Optimizer, ::MOI.ConstraintName, ::Type{MOI.ConstraintIndex}) = true
+function MOI.get(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex)::String
     println(model.inner.constraint_info[ci.value].name)
     return model.inner.constraint_info[ci.value].name
 end
 
-function MOI.set(model::Optimizer, ::MOI.ConstraintName, ci::CI, name::String)
+function MOI.set(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex,
+                 name::String)
     model.inner.constraint_info[ci.value].name = name
     return nothing
 end
 
-function MOI.get(model::Optimizer, ::Type{MathOptInterface.ConstraintIndex}, name::String)
+function MOI.get(model::Optimizer, ::Type{MOI.ConstraintIndex}, name::String)
     for (i, c) in enumerate(model.inner.constraint_info)
         if name == c.name
-            return CI(i)
+            return MOI.ConstraintIndex(i)
         end
     end
     return error("Unrecognized constraint name $name.")

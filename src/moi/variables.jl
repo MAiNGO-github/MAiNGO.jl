@@ -3,7 +3,7 @@
 #Get number of variables
 MOI.get(model::Optimizer, ::MOI.NumberOfVariables) = length(model.inner.variable_info)
 function MOI.get(model::Optimizer, ::MOI.ListOfVariableIndices)
-    return VI.(1:length(model.inner.variable_info))
+    return MOI.VariableIndex.(1:length(model.inner.variable_info))
 end
 
 function MOI.add_variables(model::Optimizer, nvars::Integer)
@@ -48,9 +48,9 @@ function MOI.add_constrained_variable(model::Optimizer,
     var = VariableInfo(set.lower, set.upper, :Cont, nothing, nothing)
     push!(model.inner.variable_info, var)
     #TODO: The interface expects us to return an index for the constraints (but we dont keep track of constraint indices).
-    #CI(...) needs be changed if this were to be implemented.
+    #MOI.ConstraintIndex(...) needs be changed if this were to be implemented.
 
-    return VI(length(model.inner.variable_info)),
+    return MOI.VariableIndex(length(model.inner.variable_info)),
            MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{Float64}}(length(model.inner.variable_info))
 end
 
@@ -59,7 +59,7 @@ function MOI.add_constrained_variable(model::Optimizer,
                                       set::MOI.Integer)
     var = VariableInfo(-1e6, 1e6, :Int, nothing, nothing)
     push!(model.inner.variable_info, var)
-    return VI(length(model.inner.variable_info)),
+    return MOI.VariableIndex(length(model.inner.variable_info)),
            MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(length(model.inner.variable_info))
 end
 
@@ -68,7 +68,7 @@ function MOI.add_constrained_variable(model::Optimizer,
                                       set::MOI.ZeroOne)
     var = VariableInfo(0, 1, :Bin, nothing, nothing)
     push!(model.inner.variable_info, var)
-    return VI(length(model.inner.variable_info)),
+    return MOI.VariableIndex(length(model.inner.variable_info)),
            MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}(length(model.inner.variable_info))
 end
 
@@ -127,21 +127,21 @@ function MOI.add_constraint(model::Optimizer, v::MOI.VariableIndex,
 end
 
 #Declare support for setting names
-#MOI.supports(model::Optimizer, ::MOI.VariableName, ::Type{VI}) = true
+#MOI.supports(model::Optimizer, ::MOI.VariableName, ::Type{MOI.VariableIndex}) = true
 
 #Implement  setting variable names
-function MOI.set(model::Optimizer, ::MOI.VariableName, vi::VI, name::String)
+function MOI.set(model::Optimizer, ::MOI.VariableName, vi::MOI.VariableIndex, name::String)
     check_variable_indices(model, vi)
     return model.inner.variable_info[vi.value].name = name
 end
 
 #Implement  getting variable names
-function MOI.get(model::Optimizer, ::MOI.VariableName, vi::VI)::String
+function MOI.get(model::Optimizer, ::MOI.VariableName, vi::MOI.VariableIndex)::String
     check_variable_indices(model, vi)
     return model.inner.variable_info[vi.value].name
 end
 
-function MOI.set(model::Optimizer, attr::MOI.VariableName, vi::VI, value)
+function MOI.set(model::Optimizer, attr::MOI.VariableName, vi::MOI.VariableIndex, value)
     check_variable_indices(model, vi)
     return model.inner.variable_info[vi.value].name = value
 end
@@ -159,7 +159,7 @@ function MOI.set(model::Optimizer, ::MOI.VariablePrimalStart,
     return
 end
 
-function MOI.get(model::Optimizer, ::MOI.VariablePrimalStart, vi::VI)
+function MOI.get(model::Optimizer, ::MOI.VariablePrimalStart, vi::MOI.VariableIndex)
     check_variable_indices(model, vi)
     return model.inner.variable_info[vi.value].start
 end

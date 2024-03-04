@@ -27,12 +27,19 @@ function MOI.get(model::Optimizer, ::MOI.ObjectiveSense)
 end
 
 #Declare support for linear and quadratic objective functions. Nonlinear objective function is enabled in constraints.jl
-MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{SAF}) = true
-MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{SQF}) = true
-MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{SNF}) = true
+MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}) = true
+
+function MOI.supports(::Optimizer,
+                      ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}})
+    return true
+end
+
+MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}) = true
 
 function MOI.set(model::Optimizer, ::MOI.ObjectiveFunction{F},
-                 obj::F) where {F<:Union{SAF,SQF,SNF}}
+                 obj::F) where {F<:Union{MOI.ScalarAffineFunction{Float64},
+                                         MOI.ScalarQuadraticFunction{Float64},
+                                         MOI.ScalarNonlinearFunction}}
     model.inner.objective_info.expression = to_expr(obj)
     return
 end

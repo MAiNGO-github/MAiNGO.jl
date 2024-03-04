@@ -5,9 +5,10 @@
 
 # MIT License Copyright (c) 2015 Joey Huchette for Baron.jl
 
-__precompile__()
-
 module MAiNGO
+
+using Libdl: Libdl
+using MAiNGO_jll
 
 @enum EnvironmentStatus begin
     MAINGO_NOT_FOUND = 1
@@ -15,13 +16,12 @@ module MAiNGO
     MAINGO_JLL = 3
     STANDALONE = 4
 end
-maingo_lib = Ref("")
-maingo_exec = Ref("")
 
-environment_status = Ref(MAINGO_NOT_FOUND)
+const maingo_lib = Ref("")
 
-using Libdl: Libdl
-using MAiNGO_jll
+const maingo_exec = Ref("")
+
+const environment_status = Ref(MAINGO_NOT_FOUND)
 
 include("find.jl") # contains all requried subroutines for finding MAiNGO
 
@@ -120,6 +120,7 @@ mutable struct MAINGOModel
         options = Dict{String,Any}(String(key) => val for (key, val) in kwargs)
         return MAINGOModel(options)
     end
+
     function MAINGOModel(options::Dict{String,Any})
         model = new()
         model.options = options
@@ -142,9 +143,11 @@ mutable struct MAINGOModel
 end
 
 function __init__()
-    return findMAiNGO(; verbose = true)
+    findMAiNGO(; verbose = true)
+    return
 end
 
 include("util.jl")
 include("MOI_wrapper.jl")
-end
+
+end  # MAiNGO
