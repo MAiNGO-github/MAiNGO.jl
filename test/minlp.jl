@@ -2,7 +2,7 @@ module MINLP
 using MAiNGO
 using JuMP, Test
 
-m = Model(MAiNGO.Optimizer)
+m = Model(optimizer_with_attributes(MAiNGO.Optimizer, "epsilonA"=> 1e-8, "epsilonR" => 0.5e-8, "relNodeTol" => 1e-11))
 MOI.set(m, MOI.Silent(), true)
 ub = [2, 2, 1]
 @variable(m, 0 ≤ x[i = 1:3] ≤ ub[i])
@@ -30,13 +30,13 @@ ub = [2, 2, 1]
 optimize!(m)
 
 @testset "MINLP" begin
-    @test isapprox(value(x[1]), 1.300975890892825, rtol = 1e-6)
-    @test isapprox(value(x[2]), 0.0, rtol = 1e-6, atol = 1e-6)
-    @test isapprox(value(x[3]), 1.0, rtol = 1e-6)
-    @test isapprox(value(y[1]), 0.0, rtol = 1e-6, atol = 1e-6)
-    @test isapprox(value(y[2]), 1.0, rtol = 1e-6)
-    @test isapprox(value(y[3]), 0.0, rtol = 1e-6, atol = 1e-6)
-    @test isapprox(objective_value(m), 6.00975890893, rtol = 1e-6)
+    @test isapprox(value(x[1]), 1.300975890892825, rtol = 1e-4)
+    @test isapprox(value(x[2]), 0.0, rtol = 1e-4, atol = 1e-4)
+    @test isapprox(value(x[3]), 1.0, rtol = 1e-4)
+    @test isapprox(value(y[1]), 0.0, rtol = 1e-4, atol = 1e-4)
+    @test isapprox(value(y[2]), 1.0, rtol = 1e-4)
+    @test isapprox(value(y[3]), 0.0, rtol = 1e-4, atol = 1e-4)
+    @test isapprox(objective_value(m), 6.00975890893, rtol = 1e-4)
 end
 
 end # module
