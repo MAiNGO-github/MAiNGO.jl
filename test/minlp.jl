@@ -2,7 +2,8 @@ module MINLP
 using MAiNGO
 using JuMP, Test
 
-m = Model(optimizer_with_attributes(MAiNGO.Optimizer, "epsilonA"=> 1e-8, "epsilonR" => 0.5e-8, "relNodeTol" => 1e-11))
+m = Model(optimizer_with_attributes(MAiNGO.Optimizer, "epsilonA" => 1e-8,
+                                    "epsilonR" => 0.5e-8, "relNodeTol" => 1e-11))
 MOI.set(m, MOI.Silent(), true)
 ub = [2, 2, 1]
 @variable(m, 0 ≤ x[i = 1:3] ≤ ub[i])
