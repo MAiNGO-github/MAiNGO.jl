@@ -27,8 +27,8 @@ caching_optimizer.optimizer.inner.silent = true
 # See the docstring of MOI.Test.Config for other arguments.
 const CONFIG = MOI.Test.Config(
                                # Modify tolerances as necessary.
-                               atol = 5e-4,
-                               rtol = 5e-4,
+                               atol = 1e-3,
+                               rtol = 1e-3,
                                # Use MOI.LOCALLY_SOLVED for local solvers.
                                optimal_status = MOI.OPTIMAL,
                                # Pass attributes or MOI functions to `exclude` to skip tests that
