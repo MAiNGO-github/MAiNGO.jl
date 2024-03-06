@@ -21,14 +21,16 @@ const BRIDGED = MOI.instantiate(MOI.OptimizerWithAttributes(MAiNGO.Optimizer,
 const caching_optimizer = MOIU.CachingOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()),
                                                 MAiNGO.Optimizer(epsilonA = 0.5e-8,
                                                                  epsilonR = 0.5e-8,
-                                                                 relNodeTol = 1e-11))
+                                                                 relNodeTol = 1e-11,
+                                                                 deltaIneq = 1e-9,
+                                                                 deltaEq = 1e-9))
 caching_optimizer.optimizer.inner.silent = true
 
 # See the docstring of MOI.Test.Config for other arguments.
 const CONFIG = MOI.Test.Config(
                                # Modify tolerances as necessary.
-                               atol = 1e-3,
-                               rtol = 1e-3,
+                               atol = 5e-4,
+                               rtol = 5e-4,
                                # Use MOI.LOCALLY_SOLVED for local solvers.
                                optimal_status = MOI.OPTIMAL,
                                # Pass attributes or MOI functions to `exclude` to skip tests that
