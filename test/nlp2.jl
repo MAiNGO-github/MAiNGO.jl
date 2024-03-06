@@ -1,7 +1,7 @@
 module NLP2
 
 using JuMP, Test
-using ..MAiNGO
+using MAiNGO
 
 m = Model(MAiNGO.Optimizer)
 MOI.set(m, MOI.Silent(), true)

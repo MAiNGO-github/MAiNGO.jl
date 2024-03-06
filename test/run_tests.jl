@@ -5,7 +5,7 @@ module TestMAINGO
 #ENV["MAINGO_LIB"]="XXX/maingo/build/libmaingo-c-api.so"  #replace with path tho c-api lib file.
 #include the wrapper
 
-using ..MAiNGO
+using MAiNGO
 using MathOptInterface
 using Test
 
@@ -21,7 +21,9 @@ const BRIDGED = MOI.instantiate(MOI.OptimizerWithAttributes(MAiNGO.Optimizer,
 const caching_optimizer = MOIU.CachingOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()),
                                                 MAiNGO.Optimizer(epsilonA = 0.5e-8,
                                                                  epsilonR = 0.5e-8,
-                                                                 relNodeTol = 1e-11))
+                                                                 relNodeTol = 1e-11,
+                                                                 deltaIneq = 1e-9,
+                                                                 deltaEq = 1e-9))
 caching_optimizer.optimizer.inner.silent = true
 
 # See the docstring of MOI.Test.Config for other arguments.
@@ -38,7 +40,7 @@ const CONFIG = MOI.Test.Config(
                                              MOI.ConstraintBasisStatus,
                                              MOI.DualObjectiveValue,
                                              #MOI.ObjectiveBound,
-                                             #MOI.VariableName, 
+                                             #MOI.VariableName,
                                              MOI.DualStatus,
                                              MOI.ConstraintDual])
 
