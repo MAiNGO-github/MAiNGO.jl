@@ -27,9 +27,11 @@ function findMAiNGO_capi(io, path)
         env_status = C_API
         println(io, "Found C-API!")
     catch e
-        @warn("Unable to find needed C interface in supplied MAINGO library file at " *
-              path *
-              ". Check the given path and if support for string based C API has been compiled.")
+        @warn(
+            "Unable to find needed C interface in supplied MAINGO library file at " *
+            path *
+            ". Check the given path and if support for string based C API has been compiled."
+        )
     end
     return env_status
 end
@@ -41,10 +43,12 @@ function findMAiNGO_standalone(io, path)
     return env_status
 end
 
-function findMAiNGO(; verbose::Bool = false,
-                    preferred::Union{EnvironmentStatus,Nothing} = nothing,
-                    standalone::Union{String,Nothing} = nothing,
-                    c_api::Union{String,Nothing} = nothing)
+function findMAiNGO(;
+    verbose::Bool = false,
+    preferred::Union{EnvironmentStatus,Nothing} = nothing,
+    standalone::Union{String,Nothing} = nothing,
+    c_api::Union{String,Nothing} = nothing,
+)
     MAiNGO.environment_status[] = MAINGO_NOT_FOUND
     MAiNGO.maingo_exec[] = ""
     MAiNGO.maingo_lib[] = ""
@@ -58,7 +62,9 @@ function findMAiNGO(; verbose::Bool = false,
         println(io, "Attempting to use MAiNGO_jll...")
         MAiNGO.environment_status[] = findMAiNGO_jll(io)
         if MAiNGO.environment_status[] != MAINGO_JLL
-            @warn("Did not find the preferred option MAiNGO_jll. Check that the package is properly installed. Proceeding to check for alternatives.")
+            @warn(
+                "Did not find the preferred option MAiNGO_jll. Check that the package is properly installed. Proceeding to check for alternatives."
+            )
             if haskey(ENV, "MAINGO_LIB") || c_api !== nothing
                 println(io, "Attempting to use C-API...")
                 lib_path = c_api === nothing ? ENV["MAINGO_LIB"] : c_api
@@ -67,9 +73,10 @@ function findMAiNGO(; verbose::Bool = false,
             if MAinGO.environment_status[] == MAINGO_NOT_FOUND &&
                (haskey(ENV, "MAINGO_EXEC") || standalone !== nothing)
                 println(io, "Attempting to use standalone version...")
-                standalone_path = standalone === nothing ? ENV["MAINGO_EXEC"] : standalone
-                MAiNGO.environment_status[] = findMAiNGO_standalone(io,
-                                                                    standalone_path)
+                standalone_path =
+                    standalone === nothing ? ENV["MAINGO_EXEC"] : standalone
+                MAiNGO.environment_status[] =
+                    findMAiNGO_standalone(io, standalone_path)
             end
         end
     else
@@ -81,12 +88,15 @@ function findMAiNGO(; verbose::Bool = false,
         end
         MAiNGO.environment_status[] = findMAiNGO_capi(io, lib_path)
         if MAiNGO.environment_status[] != C_API
-            @warn("Unable to use the preferred option C-API. Make sure the solver has been separately downloaded, and that you properly set the MAINGO_LIB environment variable to the shared_parser library file. Proceeding to check for alternatives.")
+            @warn(
+                "Unable to use the preferred option C-API. Make sure the solver has been separately downloaded, and that you properly set the MAINGO_LIB environment variable to the shared_parser library file. Proceeding to check for alternatives."
+            )
             if haskey(ENV, "MAINGO_EXEC") || standalone !== nothing
                 println(io, "Attempting to use standalone version...")
-                standalone_path = standalone === nothing ? ENV["MAINGO_EXEC"] : standalone
-                MAiNGO.environment_status[] = findMAiNGO_standalone(io,
-                                                                    standalone_path)
+                standalone_path =
+                    standalone === nothing ? ENV["MAINGO_EXEC"] : standalone
+                MAiNGO.environment_status[] =
+                    findMAiNGO_standalone(io, standalone_path)
             end
             if MAiNGO.environment_status[] == MAINGO_NOT_FOUND
                 println(io, "Attempting to use MAiNGO_jll...")
@@ -96,8 +106,12 @@ function findMAiNGO(; verbose::Bool = false,
     end
 
     if MAiNGO.environment_status[] == MAINGO_NOT_FOUND
-        @warn("No version of MAiNGO found. Please check that you have either installed the MAiNGO_jll package, or downloaded the solver seperately and properly set the MAINGO_EXEC or MAINGO_LIB environment variable.")
+        @warn(
+            "No version of MAiNGO found. Please check that you have either installed the MAiNGO_jll package, or downloaded the solver seperately and properly set the MAINGO_EXEC or MAINGO_LIB environment variable."
+        )
     elseif MAiNGO.environment_status[] == STANDALONE
-        @warn("Using the standalone version of MAiNGO. This requires reading and writing files to memory, which may increase runtimes.")
+        @warn(
+            "Using the standalone version of MAiNGO. This requires reading and writing files to memory, which may increase runtimes."
+        )
     end
 end

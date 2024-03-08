@@ -3,7 +3,11 @@
 #Supports minimizing or maximizing
 MOI.supports(::Optimizer, ::MOI.ObjectiveSense) = true
 
-function MOI.set(model::Optimizer, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ObjectiveSense,
+    sense::MOI.OptimizationSense,
+)
     model.inner.objective_info
     if sense == MOI.MIN_SENSE
         model.inner.objective_info.sense = :Min
@@ -31,8 +35,11 @@ MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{SAF}) = true
 MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{SQF}) = true
 MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{SNF}) = true
 
-function MOI.set(model::Optimizer, ::MOI.ObjectiveFunction{F},
-                 obj::F) where {F<:Union{SAF,SQF,SNF}}
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ObjectiveFunction{F},
+    obj::F,
+) where {F<:Union{SAF,SQF,SNF}}
     model.inner.objective_info.expression = to_expr(obj)
     return
 end

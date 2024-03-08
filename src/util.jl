@@ -1,7 +1,9 @@
 
 #Set lower bounds on constraints or variables
-function set_lower_bound(info::Union{VariableInfo,ConstraintInfo},
-                         value::Union{Number,Nothing})
+function set_lower_bound(
+    info::Union{VariableInfo,ConstraintInfo},
+    value::Union{Number,Nothing},
+)
     if value !== nothing
         # info.lower_bound !== nothing && throw(ArgumentError("Lower bound has already been set"))
         info.lower_bound = value
@@ -10,8 +12,10 @@ function set_lower_bound(info::Union{VariableInfo,ConstraintInfo},
 end
 
 #Set upper bounds on constraints or variables
-function set_upper_bound(info::Union{VariableInfo,ConstraintInfo},
-                         value::Union{Number,Nothing})
+function set_upper_bound(
+    info::Union{VariableInfo,ConstraintInfo},
+    value::Union{Number,Nothing},
+)
     if value !== nothing
         # info.upper_bound !== nothing && throw(ArgumentError("Upper bound has already been set"))
         info.upper_bound = value
@@ -56,7 +60,21 @@ end
 
 function verify_support(c::Expr)
     if c.head == :call
-        if c.args[1] in (:+, :-, :*, :/, :exp, :log, :abs, :min, :max)
+        if c.args[1] in (
+            :+,
+            :-,
+            :*,
+            :/,
+            :exp,
+            :log,
+            :abs,
+            :min,
+            :max,
+            :sin,
+            :cos,
+            :tan,
+            :tanh,
+        )
             return c
         elseif c.args[1] in (:<=, :>=, :(==))
             map(verify_support, c.args[2:end])
@@ -83,12 +101,20 @@ end
 #added some code from SCIP.jl/src/nonlinear.jl
 
 # Mapping from Julia (as given by MOI) to strings for unary functions
-const UnaryOpMAP = Dict{Symbol,String}(:sqrt => "sqrt",    # unary
-                                       :exp => "exp",     # unary
-                                       :log => "log",     # unary
-                                       :abs => "abs")
-const BinaryOpMAP = Dict{Symbol,String}(:min => "min",      # binary
-                                        :max => "max")
+const UnaryOpMAP = Dict{Symbol,String}(
+    :sqrt => "sqrt",    # unary
+    :exp => "exp",     # unary
+    :log => "log",     # unary
+    :abs => "abs",
+    :sin => "sin",
+    :cos => "cos",
+    :tan => "tan",
+    :tanh => "tanh",
+)
+const BinaryOpMAP = Dict{Symbol,String}(
+    :min => "min",      # binary
+    :max => "max",
+)
 
 ##This function enables the conversion from the symbolic expressions used in MathOptInterface to the ALE syntax used in MAINGO
 
@@ -102,7 +128,10 @@ function to_str(x, y = nothing)
 end
 
 #Main function
-function to_str(expr::Expr, variable_names::Union{Nothing,Array{String,1}} = nothing)
+function to_str(
+    expr::Expr,
+    variable_names::Union{Nothing,Array{String,1}} = nothing,
+)
 
     #Shorthand to always use the variable names
     to_str_(x) = to_str(x, variable_names)
@@ -111,8 +140,16 @@ function to_str(expr::Expr, variable_names::Union{Nothing,Array{String,1}} = not
     if Meta.isexpr(expr, :comparison) # range constraint
         if length(expr.args) == 5
             # args: [lhs, <=, mid, <=, rhs], lhs and rhs constant
-            return join([expr.args[1], expr.args[2], to_str_(expr.args[3]), expr.args[4],
-                         expr.args[5]], "")
+            return join(
+                [
+                    expr.args[1],
+                    expr.args[2],
+                    to_str_(expr.args[3]),
+                    expr.args[4],
+                    expr.args[5],
+                ],
+                "",
+            )
         elseif length(expr.args) == 3
             # args: [op, lhs, rhs] rhs const
             #return join([to_str_(expr.args[1]), expr.args[2], expr.args[3]], "")
@@ -126,40 +163,76 @@ function to_str(expr::Expr, variable_names::Union{Nothing,Array{String,1}} = not
         if op in [:(==), :<=, :>=]
             # args: [op, lhs, rhs]
             if length(expr.args) == 3
-                return return join([to_str_(expr.args[2]), to_str_(expr.args[1]),
-                                    to_str_(expr.args[3])], " ")
+                return return join(
+                    [
+                        to_str_(expr.args[2]),
+                        to_str_(expr.args[1]),
+                        to_str_(expr.args[3]),
+                    ],
+                    " ",
+                )
                 # args: [lhs, <=, mid, <=, rhs]
             elseif length(expr.args) == 5
-                return join([to_str_(expr.args[1]), to_str_(expr.args[2]),
-                             to_str_(expr.args[3]), to_str_(expr.args[4]),
-                             to_str_(expr.args[5])], " ")
+                return join(
+                    [
+                        to_str_(expr.args[1]),
+                        to_str_(expr.args[2]),
+                        to_str_(expr.args[3]),
+                        to_str_(expr.args[4]),
+                        to_str_(expr.args[5]),
+                    ],
+                    " ",
+                )
             end
 
         elseif all(d -> isa(d, Real), expr.args[2:end]) # handle case with just numeric values, so compute e.g. exp(-4)
             return wrap_with_parens(string(eval(expr)))
         elseif op == :^
-            return join(["pow(", to_str_(expr.args[2]), ",", to_str_(expr.args[3]), ")"],
-                        " ")
+            return join(
+                [
+                    "pow(",
+                    to_str_(expr.args[2]),
+                    ",",
+                    to_str_(expr.args[3]),
+                    ")",
+                ],
+                " ",
+            )
 
         elseif op == :- && num_children == 1
             # Special case: unary version of minus. 
             return join(["-(", to_str_(expr.args[2]), ")"], " ")
 
-        elseif op in [:sqrt, :exp, :log, :abs]
+        elseif op in [:sqrt, :exp, :log, :abs, :sin, :cos, :tan, :tanh]
             # Unary operators
             @assert num_children == 1
             return join([UnaryOpMAP[op], "(", to_str_(expr.args[2]), ")"], " ")
 
         elseif op in (:+, :-, :*, :/)
             # N-ary operations
-            return wrap_with_parens(string(join([to_str_(d) for d in expr.args[2:end]],
-                                                string(expr.args[1]))))
+            return wrap_with_parens(
+                string(
+                    join(
+                        [to_str_(d) for d in expr.args[2:end]],
+                        string(expr.args[1]),
+                    ),
+                ),
+            )
         elseif op in [:min, :max]
             # Binary operators
             @assert num_children == 2
 
-            return join([BinaryOpMAP[op], "(", to_str_(expr.args[2]), ",",
-                         to_str_(expr.args[3]), ")"], " ")
+            return join(
+                [
+                    BinaryOpMAP[op],
+                    "(",
+                    to_str_(expr.args[2]),
+                    ",",
+                    to_str_(expr.args[3]),
+                    ")",
+                ],
+                " ",
+            )
 
         else
             throw(UnrecognizedExpressionException("call", expr))
@@ -246,14 +319,24 @@ function write_ALE_problem(m::MAINGOModel)
         end
 
         if (m.variable_info[i].category != :Bin)
-            postfix = " in [" * string(m.variable_info[i].lower_bound) * "," *
-                      string(m.variable_info[i].upper_bound) * "];"
+            postfix =
+                " in [" *
+                string(m.variable_info[i].lower_bound) *
+                "," *
+                string(m.variable_info[i].upper_bound) *
+                "];"
         else
             postfix = ";"
         end
         println(fp, prefix, m.variable_info[i].name, postfix)
         if (m.variable_info[i].start !== nothing)
-            println(fp, m.variable_info[i].name, ".init <-", m.variable_info[i].start, ";")
+            println(
+                fp,
+                m.variable_info[i].name,
+                ".init <-",
+                m.variable_info[i].start,
+                ";",
+            )
         end
     end
     #Declare constraints
@@ -269,11 +352,20 @@ function write_ALE_problem(m::MAINGOModel)
     end
     println(fp)
     println(fp, "objective: #Always minimizing")
-    if (m.objective_info.sense == :Feasibility || m.objective_info.expression === nothing)
+    if (
+        m.objective_info.sense == :Feasibility ||
+        m.objective_info.expression === nothing
+    )
         println(fp, "0;")
     elseif (m.objective_info.sense == :Max)
-        println(fp, "-",
-                wrap_with_parens(to_str(m.objective_info.expression, variable_names)), ";")
+        println(
+            fp,
+            "-",
+            wrap_with_parens(
+                to_str(m.objective_info.expression, variable_names),
+            ),
+            ";",
+        )
     elseif (m.objective_info.sense == :Min)
         println(fp, to_str(m.objective_info.expression, variable_names), ";")
     else
@@ -294,13 +386,15 @@ using JSON
 
 #Used to read in output files without requiring the C-API
 function read_results(m::MAINGOModel, retcode)
-    statusMap = Dict("Globally optimal" => GLOBALLY_OPTIMAL,
-                     "Infeasible" => INFEASIBLE,
-                     "Feasible point" => FEASIBLE_POINT,
-                     "No feasible point found" => NO_FEASIBLE_POINT_FOUND,
-                     "Reached target bound" => BOUND_TARGETS,
-                     "Not solved yet" => NOT_SOLVED_YET,
-                     "Just a worker" => JUST_A_WORKER_DONT_ASK_ME)
+    statusMap = Dict(
+        "Globally optimal" => GLOBALLY_OPTIMAL,
+        "Infeasible" => INFEASIBLE,
+        "Feasible point" => FEASIBLE_POINT,
+        "No feasible point found" => NO_FEASIBLE_POINT_FOUND,
+        "Reached target bound" => BOUND_TARGETS,
+        "Not solved yet" => NOT_SOLVED_YET,
+        "Just a worker" => JUST_A_WORKER_DONT_ASK_ME,
+    )
     m.solution_info = SolutionStatus()
     if retcode == -1
         m.solution_info.solver_status = TERMINATED_BY_MAINGO
@@ -314,20 +408,27 @@ function read_results(m::MAINGOModel, retcode)
             feasible_solution_found = df["Solution"]["FoundFeasiblePoint"]
             m.solution_info.wall_time = df["Timing"]["TotalWall"]
             m.solution_info.cpu_time = df["Timing"]["TotalCPU"]
-            m.solution_info.model_status = statusMap[df["Solution"]["MAiNGOstatus"]]
+            m.solution_info.model_status =
+                statusMap[df["Solution"]["MAiNGOstatus"]]
             m.solution_info.solver_status = NORMAL_COMPLETION
             if feasible_solution_found == 1.0
                 if m.objective_info.sense == Symbol("Min")
-                    m.solution_info.objective_value = df["Solution"]["BestSolutionValue"]
-                    m.solution_info.upper_bound = m.solution_info.objective_value
-                    m.solution_info.lower_bound = m.solution_info.upper_bound -
-                                                  df["Solution"]["AbsoluteGap"]
+                    m.solution_info.objective_value =
+                        df["Solution"]["BestSolutionValue"]
+                    m.solution_info.upper_bound =
+                        m.solution_info.objective_value
+                    m.solution_info.lower_bound =
+                        m.solution_info.upper_bound -
+                        df["Solution"]["AbsoluteGap"]
                 elseif m.objective_info.sense == Symbol("Max")
                     # MAiNGO always formulates minimization problem, so we need to flip the sign and the bounds in case of maximization
-                    m.solution_info.objective_value = -df["Solution"]["BestSolutionValue"]
-                    m.solution_info.lower_bound = m.solution_info.objective_value
-                    m.solution_info.upper_bound = m.solution_info.upper_bound +
-                                                  df["Solution"]["AbsoluteGap"]
+                    m.solution_info.objective_value =
+                        -df["Solution"]["BestSolutionValue"]
+                    m.solution_info.lower_bound =
+                        m.solution_info.objective_value
+                    m.solution_info.upper_bound =
+                        m.solution_info.upper_bound +
+                        df["Solution"]["AbsoluteGap"]
                 end
                 m.solution_info.feasible_point = Float64[]
                 for var in df["Solution"]["SolutionPoint"] # assumes ordering is maintained throughout everything, assumption seems justified based on some tests
@@ -340,7 +441,9 @@ function read_results(m::MAINGOModel, retcode)
                 m.solution_info.lower_bound = NaN
             end
         else
-            @warn("The model might have solved, but reading results from the standalone version is only possible from json output currently. Please set the option \"writeJson\" to 1.")
+            @warn(
+                "The model might have solved, but reading results from the standalone version is only possible from json output currently. Please set the option \"writeJson\" to 1."
+            )
         end
     end
 end
@@ -351,8 +454,12 @@ function write_settings_file(model::MAINGOModel)
     model.settings_file_name = pwd() * "/MAiNGOSettingsJuMP.txt"
     open("MAiNGOSettingsJuMP.txt", "w") do file
         for (key, value) in model.options
-            if (!(key in ["prob_name", "res_name", "log_name", "settings_name"]) &&
-                isa(value, Real))
+            if (
+                !(
+                    key in
+                    ["prob_name", "res_name", "log_name", "settings_name"]
+                ) && isa(value, Real)
+            )
                 settingstring = key * " " * string(value) * "\n"
                 write(file, settingstring)
             end

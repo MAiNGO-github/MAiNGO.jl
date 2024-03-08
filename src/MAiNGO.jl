@@ -23,6 +23,8 @@ using MAiNGO_jll
 
 include("find.jl") # contains all requried subroutines for finding MAiNGO
 
+const maingo_variable_default_bound = 10e8
+
 #Define struct for variables
 mutable struct VariableInfo
     lower_bound::Union{Float64,Nothing}
@@ -128,12 +130,17 @@ mutable struct MAINGOModel
         model.silent = false
         temp_dir = mktempdir()
         model.temp_dir_name = temp_dir
-        model.problem_file_name = get!(options, "prob_name",
-                                       joinpath(temp_dir, "maingoProblem.txt"))
-        model.result_file_name = get!(options, "res_name", joinpath(temp_dir, "result.txt"))
-        model.log_file_name = get!(options, "log_name", joinpath(temp_dir, "bab.log"))
-        model.settings_file_name = get!(options, "settings_name",
-                                        joinpath(pwd(), "MAiNGOSettings.txt"))
+        model.problem_file_name =
+            get!(options, "prob_name", joinpath(temp_dir, "maingoProblem.txt"))
+        model.result_file_name =
+            get!(options, "res_name", joinpath(temp_dir, "result.txt"))
+        model.log_file_name =
+            get!(options, "log_name", joinpath(temp_dir, "bab.log"))
+        model.settings_file_name = get!(
+            options,
+            "settings_name",
+            joinpath(pwd(), "MAiNGOSettings.txt"),
+        )
         model.solution_info = nothing
         return model
     end
@@ -145,5 +152,4 @@ end
 
 include("util.jl")
 include("MOI_wrapper.jl")
-
 end

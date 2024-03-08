@@ -17,10 +17,12 @@ const SQF = MOI.ScalarQuadraticFunction{Float64}
 const SNF = MOI.ScalarNonlinearFunction
 
 # set aliases
-const Bounds = Union{MOI.EqualTo{Float64},
-                     MOI.GreaterThan{Float64},
-                     MOI.LessThan{Float64},
-                     MOI.Interval{Float64}}
+const Bounds = Union{
+    MOI.EqualTo{Float64},
+    MOI.GreaterThan{Float64},
+    MOI.LessThan{Float64},
+    MOI.Interval{Float64},
+}
 
 #Define the optimizer.
 mutable struct Optimizer <: MOI.AbstractOptimizer
@@ -38,15 +40,17 @@ Optimizer(; options...) = Optimizer(MAINGOModel(; options...), nothing)
 MOI.get(::Optimizer, ::MOI.SolverName) = "MAiNGO"
 
 #Define functions and constraints usable in the model 
-MOIU.@model(Model, # modelname
-            (), # scalarsets
-            (MOI.Interval, MOI.LessThan, MOI.GreaterThan, MOI.EqualTo), # typedscalarsets 
-            (), # vectorsets
-            (), # typedvectorsets
-            (), # scalarfunctions
-            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction), # typedscalarfunctions (that we can handle nonlinear functions is specified later)
-            (), # vectorfunctions
-            ())
+MOIU.@model(
+    Model, # modelname
+    (), # scalarsets
+    (MOI.Interval, MOI.LessThan, MOI.GreaterThan, MOI.EqualTo), # typedscalarsets 
+    (), # vectorsets
+    (), # typedvectorsets
+    (), # scalarfunctions
+    (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction), # typedscalarfunctions (that we can handle nonlinear functions is specified later)
+    (), # vectorfunctions
+    ()
+)
 
 #We allow setting and receiving parameters by string
 #E.g. model=Model(optimizer_with_attributes(MAINGO.Optimizer, "epsilonA"=> 1e-8,"res_name"=>"res_new.txt","prob_name"=>"problem.txt"))
@@ -125,7 +129,8 @@ function MOI.empty!(model::Optimizer)
     silent = model.inner.silent
 
     model.inner = MAINGOModel(;
-                              ((Symbol(key), val) for (key, val) in model.inner.options)...)
+        ((Symbol(key), val) for (key, val) in model.inner.options)...,
+    )
     if silent
         MOI.set(model, MOI.Silent(), true)
     else
@@ -158,7 +163,9 @@ function optimizeWithFile!(model::Optimizer)
     write_settings_file(model.inner)
     write_ALE_file(model.inner)
     rm("statisticsAndSolution.json"; force = true) # remove possibly existing json file from older runs
-    retcode = runandcapture(`$(MAiNGO.maingo_exec[]) $(model.inner.problem_file_name) $(model.inner.settings_file_name)`)
+    retcode = runandcapture(
+        `$(MAiNGO.maingo_exec[]) $(model.inner.problem_file_name) $(model.inner.settings_file_name)`,
+    )
     return read_results(model.inner, retcode)
 end
 
@@ -167,8 +174,10 @@ struct option_pair_c
     option_name::Cstring
     option_value::Cdouble
     function option_pair_c(name::String, value::Real)
-        return new(Base.unsafe_convert(Cstring, Base.cconvert(Cstring, name)),
-                   Base.unsafe_convert(Cdouble, Base.cconvert(Cdouble, value)))
+        return new(
+            Base.unsafe_convert(Cstring, Base.cconvert(Cstring, name)),
+            Base.unsafe_convert(Cdouble, Base.cconvert(Cdouble, value)),
+        )
     end
 end
 
@@ -199,8 +208,12 @@ function MOI.optimize!(model::Optimizer)
         for (key, value) in model.inner.options
             #MAINGO only has options with numeric value
             # prob_name and res_name and log_name are already set in constructor
-            if (!(key in ["prob_name", "res_name", "log_name", "settings_name"]) &&
-                isa(value, Real))
+            if (
+                !(
+                    key in
+                    ["prob_name", "res_name", "log_name", "settings_name"]
+                ) && isa(value, Real)
+            )
                 push!(options, option_pair_c(String(key), Float64(value)))
             end
         end
@@ -211,13 +224,38 @@ function MOI.optimize!(model::Optimizer)
         # (const char* aleString, double* objectiveValue, double* solutionPoint, unsigned solutionPointLength, double* cpuSolutionTime, double* wallSolutionTime, double* upper_bound, double* lower_bound, const char* resultFileName, const char* logFileName, const char* settingsFileName, const option_pair* options, unsigned numberOptions);
         # (function,location), return type, input types, inputs
 
-        status = ccall(("solve_problem_from_ale_string_with_maingo", maingo_lib[]), Cint,
-                       (Cstring, Ref{Cdouble}, Ptr{Cdouble}, Cuint, Ref{Cdouble},
-                        Ref{Cdouble}, Ref{Cdouble}, Ref{Cdouble}, Cstring, Cstring, Cstring,
-                        Ptr{option_pair_c}, Cuint), problem, obj, solution,
-                       length(solution), cpuTime, wallTime, obj_upper_bound,
-                       obj_lower_bound, resultFileName, logFileName, settingsFileName,
-                       options, length(options))
+        status = ccall(
+            ("solve_problem_from_ale_string_with_maingo", maingo_lib[]),
+            Cint,
+            (
+                Cstring,
+                Ref{Cdouble},
+                Ptr{Cdouble},
+                Cuint,
+                Ref{Cdouble},
+                Ref{Cdouble},
+                Ref{Cdouble},
+                Ref{Cdouble},
+                Cstring,
+                Cstring,
+                Cstring,
+                Ptr{option_pair_c},
+                Cuint,
+            ),
+            problem,
+            obj,
+            solution,
+            length(solution),
+            cpuTime,
+            wallTime,
+            obj_upper_bound,
+            obj_lower_bound,
+            resultFileName,
+            logFileName,
+            settingsFileName,
+            options,
+            length(options),
+        )
 
         model.inner.solution_info = SolutionStatus()
         if (status == -1)
@@ -225,7 +263,10 @@ function MOI.optimize!(model::Optimizer)
             model.inner.solution_info.model_status = NO_FEASIBLE_POINT_FOUND
         else
             maingo_status = MaingoModelStatus(status)
-            if (maingo_status == GLOBALLY_OPTIMAL || maingo_status == FEASIBLE_POINT)
+            if (
+                maingo_status == GLOBALLY_OPTIMAL ||
+                maingo_status == FEASIBLE_POINT
+            )
                 model.inner.solution_info.feasible_point = solution
 
                 if model.inner.objective_info.sense == :Max
@@ -254,7 +295,9 @@ function MOI.optimize!(model::Optimizer)
     elseif environment_status[] == STANDALONE
         optimizeWithFile!(model)
     else
-        @warn("No version of MAiNGO has been set. Please call findMAiNGO() and try again.")
+        @warn(
+            "No version of MAiNGO has been set. Please call findMAiNGO() and try again."
+        )
     end
 end
 

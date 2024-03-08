@@ -70,7 +70,9 @@ function MOI.get(model::Optimizer, ::MOI.PrimalStatus)
 end
 
 #Get the objective value
-MOI.get(model::Optimizer, ::MOI.ObjectiveValue) = model.inner.solution_info.objective_value
+function MOI.get(model::Optimizer, ::MOI.ObjectiveValue)
+    return model.inner.solution_info.objective_value
+end
 
 #Get variable values at solution
 function MOI.get(model::Optimizer, ::MOI.VariablePrimal, vi::VI)

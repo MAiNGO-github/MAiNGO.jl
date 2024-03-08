@@ -1,17 +1,31 @@
 #This file handels support for constraints. Defines what type of constraints can be handeled.
 
 #Declare and implement support for scalar affine and quadratic constraints
-function MOI.supports_constraint(::Optimizer, ::Type{<:Union{SAF,SQF,SNF}},
-                                 ::Type{<:Union{MOI.GreaterThan{Float64},
-                                                MOI.LessThan{Float64},MOI.EqualTo{Float64}}})
+function MOI.supports_constraint(
+    ::Optimizer,
+    ::Type{<:Union{SAF,SQF,SNF}},
+    ::Type{
+        <:Union{
+            MOI.GreaterThan{Float64},
+            MOI.LessThan{Float64},
+            MOI.EqualTo{Float64},
+        },
+    },
+)
     return true
 end
 
 #How a linear or quadratic constraint can be added.
 #Linear and quadratic constraints are converted into nonlinear constraints.
-function MOI.add_constraint(model::Optimizer, f::Union{SAF,SQF,SNF},
-                            set::Union{MOI.GreaterThan{Float64},MOI.LessThan{Float64},
-                                       MOI.EqualTo{Float64}})
+function MOI.add_constraint(
+    model::Optimizer,
+    f::Union{SAF,SQF,SNF},
+    set::Union{
+        MOI.GreaterThan{Float64},
+        MOI.LessThan{Float64},
+        MOI.EqualTo{Float64},
+    },
+)
     #check_variable_indices(model, f)
 
     expr = to_expr(f)
@@ -40,7 +54,11 @@ function MOI.set(model::Optimizer, ::MOI.ConstraintName, ci::CI, name::String)
     return nothing
 end
 
-function MOI.get(model::Optimizer, ::Type{MathOptInterface.ConstraintIndex}, name::String)
+function MOI.get(
+    model::Optimizer,
+    ::Type{MathOptInterface.ConstraintIndex},
+    name::String,
+)
     for (i, c) in enumerate(model.inner.constraint_info)
         if name == c.name
             return CI(i)
@@ -57,33 +75,49 @@ function MOI.set(model::Optimizer, ::MOI.NLPBlock, nlp_data::MOI.NLPBlockData)
     nlp_eval = nlp_data.evaluator
     MOI.initialize(nlp_eval, [:ExprGraph])
 
-    for i = 1:length(nlp_data.constraint_bounds)
+    for i in 1:length(nlp_data.constraint_bounds)
         expr = MOI.constraint_expr(nlp_eval, i)
         constraint_info = ConstraintInfo(expr, nothing)
         push!(model.inner.constraint_info, constraint_info)
     end
     if (nlp_data.has_objective)
         expr = MOI.objective_expr(nlp_eval)
-        model.inner.objective_info = ObjectiveInfo(expr, model.inner.objective_info.sense)
+        model.inner.objective_info =
+            ObjectiveInfo(expr, model.inner.objective_info.sense)
     end
     return nothing
 end
 
 ## Allow setting binary after creation
-MOI.supports_constraint(::Optimizer, ::Type{MOI.VariableIndex}, ::Type{MOI.ZeroOne}) = true
-MOI.supports_constraint(::Optimizer, ::Type{MOI.VariableIndex}, ::Type{MOI.Integer}) = true
+function MOI.supports_constraint(
+    ::Optimizer,
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.ZeroOne},
+)
+    return true
+end
+function MOI.supports_constraint(
+    ::Optimizer,
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.Integer},
+)
+    return true
+end
 
-function MOI.add_constraint(model::Optimizer, f::MOI.VariableIndex,
-                            set::Union{MOI.ZeroOne,MOI.Integer})
+function MOI.add_constraint(
+    model::Optimizer,
+    f::MOI.VariableIndex,
+    set::Union{MOI.ZeroOne,MOI.Integer},
+)
     vi = f
     check_variable_indices(model, vi)
     variable_info = model.inner.variable_info[vi.value]
     if set isa MOI.ZeroOne
         variable_info.category = :Bin
-        model.inner.variable_info[vi.value].upper_bound = min(model.inner.variable_info[vi.value].upper_bound,
-                                                              1.0)
-        model.inner.variable_info[vi.value].lower_bound = max(model.inner.variable_info[vi.value].lower_bound,
-                                                              0.0)
+        model.inner.variable_info[vi.value].upper_bound =
+            min(model.inner.variable_info[vi.value].upper_bound, 1.0)
+        model.inner.variable_info[vi.value].lower_bound =
+            max(model.inner.variable_info[vi.value].lower_bound, 0.0)
 
         if (model.inner.variable_info[vi.value].upper_bound != 1.0)
             #Bin can not have bounds
@@ -100,4 +134,71 @@ function MOI.add_constraint(model::Optimizer, f::MOI.VariableIndex,
         error()
     end
     return MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(vi.value)
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
+)
+    if !MOI.is_valid(model, MOI.VariableIndex(ci.value))
+        return false
+    end
+    info = model.inner.variable_info[ci.value]
+    return info.upper_bound !== nothing &&
+           info.upper_bound < maingo_variable_default_bound &&
+           info.lower_bound != info.upper_bound
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
+)
+    if !MOI.is_valid(model, MOI.VariableIndex(ci.value))
+        return false
+    end
+    info = model.inner.variable_info[ci.value]
+    return info.lower_bound !== nothing &&
+           info.lower_bound > -maingo_variable_default_bound &&
+           info.lower_bound != info.upper_bound
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}},
+)
+    if !MOI.is_valid(model, MOI.VariableIndex(ci.value))
+        return false
+    end
+    info = model.inner.variable_info[ci.value]
+    return info.lower_bound !== nothing && info.lower_bound == info.upper_bound
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    ci::MOI.ConstraintIndex{F,S},
+) where {
+    F<:Union{SAF,SQF,SNF},
+    S<:Union{
+        MOI.GreaterThan{Float64},
+        MOI.LessThan{Float64},
+        MOI.EqualTo{Float64},
+    },
+}
+    return 1 <= ci.value <= length(model.inner.constraint_info)
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne},
+)
+    return MOI.is_valid(model, MOI.VariableIndex(ci.value)) &&
+           model.inner.variable_info[ci.value].category == :Bin
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer},
+)
+    return MOI.is_valid(model, MOI.VariableIndex(ci.value)) &&
+           model.inner.variable_info[ci.value].category == :Int
 end

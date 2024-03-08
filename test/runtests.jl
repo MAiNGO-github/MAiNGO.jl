@@ -8,4 +8,5 @@ include("nlp2.jl")
 include("pool1.jl")
 include("bad_expressions.jl")
 
+include("run_minlp_tests.jl")
 include("run_tests.jl")
