@@ -4,10 +4,10 @@
 MAiNGO (**M**cCormick-based **A**lgorithm for mixed-**i**nteger **N**onlinear **G**lobal **O**ptimization) is a deterministic global optimization solver for nonconvex mixed-integer nonlinear programs (MINLPs). For more information on MAiNGO, including installation, usage, and licensing, please see the [repository](https://git.rwth-aachen.de/avt-svt/public/maingo) and the [documentation](https://avt-svt.pages.rwth-aachen.de/public/maingo/).
 
 MAiNGO.jl is a wrapper for using MAiNGO in Julia.
-It requires a working installation of MAiNGO, either the standalone version with parser support (Mode A), or the shared parser libary version (Mode B). When building MAiNGO from source this is configurable in the CMake configuration of MAiNGO. Per default, precompiled version of MAiNGO is used that operates in Mode B. 
+It requires a working installation of MAiNGO, either the standalone version with parser support (Mode A), or the shared parser library version (Mode B). When building MAiNGO from source this is configurable in the CMake configuration of MAiNGO. Per default, precompiled version of MAiNGO is used that operates in Mode B. 
 
 ## Using the precompiled version of MAiNGO from the Julia Package Manager
-A Julia package containing a precompiled version of MAiNGO is available (MAiNGO_jll). This version is used by default on supported platforms (Linux/MacOs/Windows), but this can be changed ([see here](#switching-between-modes-finding-the-maingo-executable)). The precompiled version contains only open-source components. If you would like to use commercial subsolvers with MAiNGO (e.g., CPLEX, KNITRO), it might still make sense to compile MAiNGO yourself and use this version rather than the precompiled one.
+A Julia package containing a precompiled version of MAiNGO is available (MAiNGO_jll). This version is used by default on supported platforms (Linux/MacOs/Windows), but this can be changed ([see here](#switching-between-modes-finding-the-maingo-executable)). The precompiled version contains only open-source components. If you would like to use commercial subsolvers with MAiNGO (for example CPLEX or KNITRO), it might still make sense to compile MAiNGO yourself and use this version rather than the precompiled one.
 
 ### Quick start
 
@@ -139,7 +139,7 @@ using MAiNGO
 ENV["MAINGO_EXEC"] = "W:\\maingo_build\\Debug\\MAiNGO.exe"
 findMAiNGO(preferred=MAiNGO.C_API) # see note on "preferred"-argument below
 # ...
-# e.g. switch to release version of MAiNGO
+# for example switch to release version of MAiNGO
 ENV["MAINGO_EXEC"] = "W:\\maingo_build\\Release\\MAiNGO.exe"
 findMAiNGO(preferred=MAiNGO.C_API)
 # now switch to C-API (mode B)
@@ -171,7 +171,7 @@ findMAiNGO(preferred=MAiNGO.C_API, c_api="path\\to\\c\\api\\shared_parser.dll")
 
 
 
-## Restrictions compared to using the Python or C++ interface.
+## Restrictions compared to using the Python or C++ interface
 It is assumed that all variables are bounded. This interface assumes that integer variables are bounded between -1e6 and 1e6. For real variables these bounds are -1e8 and 1e8.
 
 Other functionality such as special support for growing datasets or MPI parallelization is not currently supported via this wrapper.
@@ -179,7 +179,7 @@ Other functionality such as special support for growing datasets or MPI parallel
 
 
 ## Tests
-A subset of testcases for MathOptInterface solvers can be run by running the script ./test/runtests.jl. The current release was tested in the following combinations:
+A subset of test cases for MathOptInterface solvers can be run by running the script ./test/runtests.jl. The current release was tested in the following combinations:
 - Julia 1.8.5 and MathOptInterface v1.18.0
 - Julia 1.9.4 and MathOptInterface v1.23.0.
 
