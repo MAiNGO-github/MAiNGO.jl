@@ -28,6 +28,7 @@ const caching_optimizer = MOIU.CachingOptimizer(
         relNodeTol = 1e-11,
         deltaIneq = 1e-9,
         deltaEq = 1e-9,
+        default_variable_bound = 1e3,
     ),
 )
 

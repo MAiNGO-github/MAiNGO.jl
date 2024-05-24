@@ -102,6 +102,7 @@ end
 mutable struct MAINGOModel
     options::Dict{String,Any}
 
+    default_variable_bound::Float64
     variable_info::Vector{VariableInfo}
     constraint_info::Vector{ConstraintInfo}
     objective_info::ObjectiveInfo
@@ -130,6 +131,12 @@ mutable struct MAINGOModel
         model.silent = false
         temp_dir = mktempdir()
         model.temp_dir_name = temp_dir
+        model.default_variable_bound = get!(
+            options,
+            "default_variable_bound",
+            maingo_variable_default_bound,
+        )
+
         model.problem_file_name =
             get!(options, "prob_name", joinpath(temp_dir, "maingoProblem.txt"))
         model.result_file_name =
