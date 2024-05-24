@@ -28,6 +28,7 @@ const caching_optimizer = MOIU.CachingOptimizer(
         relNodeTol = 1e-11,
         deltaIneq = 1e-9,
         deltaEq = 1e-9,
+        default_variable_bound = 1e3,
     ),
 )
 
@@ -187,6 +188,45 @@ function test_bridge_indicator_to_milp()
     x_val = MOI.get.(model, MOI.VariablePrimal(), x)
     z_val = MOI.get(model, MOI.VariablePrimal(), z)
     @test z_val < 0.5 || (sum(x_val) <= 1.0 + 1e-5)
+    return
+end
+
+function test_to_expr()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    a_terms = MOI.ScalarAffineTerm{Float64}[]
+    q_terms = MOI.ScalarQuadraticTerm{Float64}[]
+    for (input, output) in (
+        # Real
+        0.0 => 0.0,
+        1.0 => 1.0,
+        2 => 2,
+        # VariableIndex
+        x => :(x[1]),
+        y => :(x[2]),
+        # ScalarAffineFunction
+        2.0 * x + 1.0 => :(1.0 + 2.0 * x[1]),
+        2.0 * x + 0.0 => :(2.0 * x[1]),
+        1.0 * x + 0.0 => :(x[1]),
+        0.0 * x + y + 1.0 => :(1.0 + x[2]),
+        MOI.ScalarAffineFunction(a_terms, 0.0) => 0.0,
+        MOI.ScalarAffineFunction(a_terms, 1.0) => 1.0,
+        # ScalarQuadraticFunction
+        2.0 * x * x + 1.0 => :(1.0 + 2.0 * x[1] * x[1]),
+        2.0 * x * y + 1.0 => :(1.0 + 2.0 * x[1] * x[2]),
+        2.0 * x * y + 0.0 => :(2.0 * x[1] * x[2]),
+        2.0 * x * y + x => :(x[1] + 2.0 * x[1] * x[2]),
+        2.0 * x * y + 0.0 * x => :(2.0 * x[1] * x[2]),
+        1.0 * x * y + x + 3.0 => :(3.0 + x[1] + x[1] * x[2]),
+        0.0 * x * y + x + 3.0 => :(3.0 + x[1]),
+        0.0 * x * y + (0.0)^2 => :(0.0),
+        MOI.ScalarQuadraticFunction(q_terms, a_terms, 0.0) => 0.0,
+        MOI.ScalarQuadraticFunction(q_terms, a_terms, 1.0) => 1.0,
+        # ScalarNonlinearFunction
+        MOI.ScalarNonlinearFunction(:log, Any[x]) => :(log(x[1])),
+    )
+        @test MAiNGO.to_expr(input) == output
+    end
     return
 end
 

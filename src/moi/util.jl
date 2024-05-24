@@ -1,46 +1,56 @@
-
-#Convert a affine term to symbolic expression 
-function to_expr(f::SAF)
-    f = MOIU.canonical(f)
+function to_expr(f::MOI.ScalarAffineFunction)
+    f = MOI.Utilities.canonical(f)
     if isempty(f.terms)
         return f.constant
-    else
-        linear_term_exprs = map(f.terms) do term
-            return :($(term.coefficient) * x[$(term.variable.value)])
-        end
-        expr = :(+($(linear_term_exprs...)))
-        if !iszero(f.constant)
-            push!(expr.args, f.constant)
-        end
-
-        return expr
     end
-end
-
-#Convert a quadratic terms to symbolic expression
-function to_expr(f::SQF)
-    f = MOIU.canonical(f)
-    linear_term_exprs = map(f.affine_terms) do term
-        i = term.variable.value
-        return :($(term.coefficient) * x[$i])
-    end
-    quadratic_term_exprs = map(f.quadratic_terms) do term
-        i = term.variable_1.value
-        j = term.variable_2.value
-        if i == j
-            :($(term.coefficient / 2) * x[$i] * x[$j])
-        else
-            :($(term.coefficient) * x[$i] * x[$j])
-        end
-    end
-    expr = :(+($(linear_term_exprs...), $(quadratic_term_exprs...)))
+    expr = Expr(:call, :+)
     if !iszero(f.constant)
         push!(expr.args, f.constant)
+    end
+    for term in f.terms
+        if isone(term.coefficient)
+            push!(expr.args, :(x[$(term.variable.value)]))
+        else
+            push!(expr.args, :($(term.coefficient) * x[$(term.variable.value)]))
+        end
+    end
+    if length(expr.args) == 2
+        return expr.args[end]
     end
     return expr
 end
 
-function to_expr(f::SNF)
+function to_expr(f::MOI.ScalarQuadraticFunction)
+    f = MOI.Utilities.canonical(f)
+    expr = Expr(:call, :+)
+    if !iszero(f.constant)
+        push!(expr.args, f.constant)
+    end
+    for term in f.affine_terms
+        if isone(term.coefficient)
+            push!(expr.args, :(x[$(term.variable.value)]))
+        else
+            push!(expr.args, :($(term.coefficient) * x[$(term.variable.value)]))
+        end
+    end
+    for term in f.quadratic_terms
+        i, j = term.variable_1.value, term.variable_2.value
+        coef = (i == j ? 0.5 : 1.0) * term.coefficient
+        if isone(coef)
+            push!(expr.args, :(x[$i] * x[$j]))
+        else
+            push!(expr.args, :($coef * x[$i] * x[$j]))
+        end
+    end
+    if length(expr.args) == 1
+        return f.constant
+    elseif length(expr.args) == 2
+        return expr.args[end]
+    end
+    return expr
+end
+
+function to_expr(f::MOI.ScalarNonlinearFunction)
     expr = Expr(:call, f.head)
     for arg in f.args
         push!(expr.args, to_expr(arg))

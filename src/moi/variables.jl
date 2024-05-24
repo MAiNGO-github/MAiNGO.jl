@@ -50,8 +50,8 @@ function MOI.add_variable(model::Optimizer)
     return MOI.add_constrained_variable(
         model,
         MOI.Interval(
-            -maingo_variable_default_bound,
-            maingo_variable_default_bound,
+            -model.inner.default_variable_bound,
+            model.inner.default_variable_bound,
         ),
     )[1]
 end
