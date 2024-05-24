@@ -218,7 +218,7 @@ function test_to_expr()
         2.0 * x * y + 0.0 * x => :(2.0 * x[1] * x[2]),
         1.0 * x * y + x + 3.0 => :(3.0 + x[1] + x[1] * x[2]),
         0.0 * x * y + x + 3.0 => :(3.0 + x[1]),
-        0.0 * x * y + (0)^2   => :(0.0),
+        0.0 * x * y + (0.0)^2   => :(0.0),
         MOI.ScalarQuadraticFunction(q_terms, a_terms, 0.0) => 0.0,
         MOI.ScalarQuadraticFunction(q_terms, a_terms, 1.0) => 1.0,
         # ScalarNonlinearFunction
