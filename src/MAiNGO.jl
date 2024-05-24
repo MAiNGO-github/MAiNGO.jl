@@ -23,7 +23,7 @@ using MAiNGO_jll
 
 include("find.jl") # contains all requried subroutines for finding MAiNGO
 
-const maingo_variable_default_bound = 10e8
+const maingo_variable_default_bound = 1e8
 
 #Define struct for variables
 mutable struct VariableInfo
